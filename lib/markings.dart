@@ -29,6 +29,8 @@ class _MarkingsState extends State<Markings> {
                 onTap: () {
                   print('MCQS button tapped!');
                 },
+                splashColor: Colors.transparent,  // Disable the splash (ripple) effect
+                highlightColor: Colors.transparent, // Disable the highlight effect
                 child: Container(
                   margin: EdgeInsets.only(top: 20.0, left: 20), // Margin at the top
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
@@ -59,6 +61,8 @@ class _MarkingsState extends State<Markings> {
                 onTap: () {
                   print('Long Answers button tapped!');
                 },
+                splashColor: Colors.transparent,  // Disable the splash (ripple) effect
+                highlightColor: Colors.transparent, // Disable the highlight effect
                 child: Container(
                   margin: EdgeInsets.only(top: 20.0, left: 20), // Margin at the top
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
