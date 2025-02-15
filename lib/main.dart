@@ -40,7 +40,7 @@ class Counter_App extends StatelessWidget {
       routes: {
         '/profile': (context) => profile_page(),
         '/signUp': (context) => signUp(),
-        '/markings': (context) => markings(),
+        '/markings': (context) => Markings(),
       },
 
     );

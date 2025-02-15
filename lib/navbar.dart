@@ -59,7 +59,7 @@ class NavBar extends StatelessWidget {
             leading: Icon(Icons.add_chart_outlined),
             title: Text("Markings"),
             onTap: () => {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => markings()))
+              Navigator.pushNamed(context, '/markings'),
             },
           ),
 
