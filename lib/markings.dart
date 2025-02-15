@@ -9,6 +9,8 @@ class Markings extends StatefulWidget {
 
 class _MarkingsState extends State<Markings> {
 
+  String selectedButton = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +29,10 @@ class _MarkingsState extends State<Markings> {
               // First button (Option 1) with rounded corners and shadow
               InkWell(
                 onTap: () {
-                  print('MCQS button tapped!');
+                  print("MCQS Button pressed");
+                  setState(() {
+                    selectedButton = 'MCQS';
+                  });
                 },
                 splashColor: Colors.transparent,  // Disable the splash (ripple) effect
                 highlightColor: Colors.transparent, // Disable the highlight effect
@@ -35,7 +40,7 @@ class _MarkingsState extends State<Markings> {
                   margin: EdgeInsets.only(top: 20.0, left: 20), // Margin at the top
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: selectedButton == 'MCQS' ? Colors.grey : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -48,7 +53,7 @@ class _MarkingsState extends State<Markings> {
                   child: Text(
                     "MCQS",
                     style: TextStyle(
-                      color: Colors.black,
+                      color: selectedButton == 'MCQS' ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -59,7 +64,10 @@ class _MarkingsState extends State<Markings> {
               // Second button (Option 2) with rounded corners and shadow
               InkWell(
                 onTap: () {
-                  print('Long Answers button tapped!');
+                  print("Long Answers Button pressed");
+                  setState(() {
+                    selectedButton = 'Long Answers';
+                  });
                 },
                 splashColor: Colors.transparent,  // Disable the splash (ripple) effect
                 highlightColor: Colors.transparent, // Disable the highlight effect
@@ -67,7 +75,7 @@ class _MarkingsState extends State<Markings> {
                   margin: EdgeInsets.only(top: 20.0, left: 20), // Margin at the top
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: selectedButton == 'Long Answers' ? Colors.grey : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -80,7 +88,7 @@ class _MarkingsState extends State<Markings> {
                   child: Text(
                     "Long Answers",
                     style: TextStyle(
-                      color: Colors.black,
+                      color: selectedButton == 'Long Answers' ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
