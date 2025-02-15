@@ -1,4 +1,4 @@
-# counter_flutter
+# EduLift
 
 A new Flutter project.
 

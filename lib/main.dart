@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'navbar.dart';
 import 'profile.dart';
 import 'signup.dart';
+import 'markings.dart';
 
 void main() {
   runApp(Counter_App());
@@ -39,6 +40,7 @@ class Counter_App extends StatelessWidget {
       routes: {
         '/profile': (context) => profile_page(),
         '/signUp': (context) => signUp(),
+        '/markings': (context) => markings(),
       },
 
     );

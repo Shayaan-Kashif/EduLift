@@ -2,7 +2,7 @@ import 'package:counter_flutter/signup.dart';
 import 'package:flutter/material.dart';
 import 'profile.dart';
 import 'signup.dart';
-
+import 'markings.dart';
 
 class NavBar extends StatelessWidget {
   const NavBar({super.key});
@@ -53,6 +53,14 @@ class NavBar extends StatelessWidget {
             leading: Icon(Icons.message),
             title: Text("Messages"),
             onTap: () => {print("Messages tapped.")},
+          ),
+
+          ListTile(
+            leading: Icon(Icons.add_chart_outlined),
+            title: Text("Markings"),
+            onTap: () => {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => markings()))
+            },
           ),
 
           Divider(),
