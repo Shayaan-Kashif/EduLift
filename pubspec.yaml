@@ -13,6 +13,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: any
 
 
   cupertino_icons: ^1.0.6
