@@ -85,7 +85,7 @@ class _MarkingsState extends State<Markings> {
                   margin: EdgeInsets.only(top: 20.0, left: 20),
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: selectedButton == 'MCQS' ? Colors.grey : Colors.white,
+                    color: selectedButton == 'MCQS' ? Colors.black87 : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -119,7 +119,7 @@ class _MarkingsState extends State<Markings> {
                   margin: EdgeInsets.only(top: 20.0, left: 20),
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   decoration: BoxDecoration(
-                    color: selectedButton == 'Long Answers' ? Colors.grey : Colors.white,
+                    color: selectedButton == 'Long Answers' ? Colors.black87 : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -154,7 +154,7 @@ class _MarkingsState extends State<Markings> {
                 highlightColor: Colors.transparent,
                 child: Container(
                   margin: EdgeInsets.only(top: 50.0, left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 40),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -167,7 +167,7 @@ class _MarkingsState extends State<Markings> {
                     ],
                   ),
                   child: Text(
-                    "Pick Image 1",
+                    "Student Image",
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
@@ -185,7 +185,7 @@ class _MarkingsState extends State<Markings> {
                 highlightColor: Colors.transparent,
                 child: Container(
                   margin: EdgeInsets.only(top: 50.0, left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 41),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -198,7 +198,7 @@ class _MarkingsState extends State<Markings> {
                     ],
                   ),
                   child: Text(
-                    "Pick Image 2",
+                    "Solution Image",
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
