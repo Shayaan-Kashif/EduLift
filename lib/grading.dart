@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
 import 'package:image_picker/image_picker.dart';
-import 'signin.dart'; // Ensure SignInPage is correctly imported
+import 'dart:io';
+import 'signin.dart';
 
 class GradingPage extends StatefulWidget {
   final String name;
@@ -16,9 +17,15 @@ class GradingPage extends StatefulWidget {
 
 class _GradingPageState extends State<GradingPage> {
   final ImagePicker _picker = ImagePicker();
+  File? _selectedImage; // Store the selected image
 
-  void _pickImage(ImageSource source) async {
-    await _picker.pickImage(source: source);
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path); // Store the image file
+      });
+    }
   }
 
   void _showUploadOptions() {
@@ -53,7 +60,7 @@ class _GradingPageState extends State<GradingPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => SignInPage()),
-          (route) => false, // Clears all previous routes
+          (route) => false,
     );
   }
 
@@ -61,7 +68,7 @@ class _GradingPageState extends State<GradingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes the back button
+        automaticallyImplyLeading: false,
         title: Text("Grading"),
         actions: [
           Tooltip(
@@ -96,7 +103,12 @@ class _GradingPageState extends State<GradingPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text("Welcome, ${widget.name}"),
+            SizedBox(height: 10),
             Text("Upload your answer key"),
+            SizedBox(height: 20),
+            _selectedImage != null
+                ? Image.file(_selectedImage!, width: 200, height: 200, fit: BoxFit.cover)
+                : Text("No image selected"),
           ],
         ),
       ),

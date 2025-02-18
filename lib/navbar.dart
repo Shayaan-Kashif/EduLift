@@ -1,7 +1,5 @@
-import 'package:counter_flutter/signup.dart';
 import 'package:flutter/material.dart';
 import 'profile.dart';
-import 'signup.dart';
 import 'markings.dart';
 
 class NavBar extends StatelessWidget {
@@ -39,7 +37,7 @@ class NavBar extends StatelessWidget {
             leading: Icon(Icons.account_circle),
             title: Text("Profile"),
             onTap: () => {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => profile_page()))
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => profile_page()))
             },
           ),
 
@@ -68,7 +66,7 @@ class NavBar extends StatelessWidget {
             leading: Icon(Icons.logout),
             title: Text("Sign Out"),
             onTap: () => {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => signUp()))
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => signUp()))
             },
           ),
 
