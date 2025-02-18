@@ -1,8 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'profile.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'signin.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GradingPage extends StatefulWidget {
   final String name;
@@ -18,6 +21,10 @@ class GradingPage extends StatefulWidget {
 class _GradingPageState extends State<GradingPage> {
   final ImagePicker _picker = ImagePicker();
   List<File> _selectedImages = []; // Store multiple images
+  List<String> _extractedText = []; // Store extracted text from images
+
+  final String azureEndpoint = dotenv.env['AZURE_OCR_ENDPOINT'] ?? "";
+  final String azureApiKey = dotenv.env['AZURE_OCR_API_KEY'] ?? "";
 
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
@@ -56,19 +63,64 @@ class _GradingPageState extends State<GradingPage> {
     );
   }
 
-  void _logout() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => SignInPage()),
-          (route) => false, // Clears all previous routes
-    );
-  }
+  Future<void> _extractTextFromImages() async {
+    _extractedText.clear(); // Clear previous results
 
-  void _gradeImages() {
-    // Logic to grade the images
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Grading images...")),
-    );
+    for (File image in _selectedImages) {
+      try {
+        // Convert image to binary (bytes)
+        List<int> imageBytes = await image.readAsBytes();
+
+        // Send request to Azure OCR API
+        var response = await http.post(
+          Uri.parse(azureEndpoint),
+          headers: {
+            "Ocp-Apim-Subscription-Key": azureApiKey,
+            "Content-Type": "application/octet-stream",
+          },
+          body: imageBytes,
+        );
+
+        if (response.statusCode == 202) {
+          // Extract Operation-Location for result retrieval
+          String operationUrl = response.headers['operation-location'] ?? '';
+          if (operationUrl.isNotEmpty) {
+            await Future.delayed(Duration(seconds: 3)); // Wait for processing
+            var resultResponse = await http.get(
+              Uri.parse(operationUrl),
+              headers: {
+                "Ocp-Apim-Subscription-Key": azureApiKey,
+              },
+            );
+
+            if (resultResponse.statusCode == 200) {
+              var jsonResponse = json.decode(resultResponse.body);
+              var readResults = jsonResponse['analyzeResult']['readResults'];
+
+              String extractedText = "";
+              for (var result in readResults) {
+                for (var line in result['lines']) {
+                  extractedText += line['text'] + " "; // Add space instead of newline
+                }
+              }
+
+              extractedText = extractedText.trim(); // Remove extra spaces
+
+              setState(() {
+                _extractedText.add(extractedText); // Store extracted text
+              });
+
+              // Print extracted text to console
+              print("Extracted Text from Image:\n$extractedText");
+            }
+          }
+        } else {
+          print("OCR API Error: ${response.statusCode} - ${response.body}");
+        }
+      } catch (e) {
+        print("Error extracting text: $e");
+      }
+    }
   }
 
   @override
@@ -100,13 +152,19 @@ class _GradingPageState extends State<GradingPage> {
             message: "Logout",
             child: IconButton(
               icon: Icon(Icons.logout),
-              onPressed: _logout,
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignInPage()),
+                      (route) => false, // Clears all previous routes
+                );
+              },
             ),
           ),
         ],
       ),
       body: _selectedImages.isEmpty
-          ? Center( // Center all text elements when no images are selected
+          ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -184,18 +242,25 @@ class _GradingPageState extends State<GradingPage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           ElevatedButton(
-            onPressed: _selectedImages.length >= 2 ? _gradeImages : null, // Disable if less than 2 images
+            onPressed: _selectedImages.length >= 2 ? _extractTextFromImages : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15), // Button size
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              minimumSize: Size(150, 50),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10), // Rounded corners
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Text("Grade", style: TextStyle(fontWeight: FontWeight.bold),),
+            child: Text(
+              "Grade",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
-          SizedBox(width: 12), // Space between buttons
+          SizedBox(width: 10),
           FloatingActionButton(
             onPressed: _showUploadOptions,
             child: Icon(Icons.add),
