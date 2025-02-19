@@ -151,6 +151,8 @@ class _GradingPageState extends State<GradingPage> {
         String gptResponse = jsonResponse["choices"][0]["message"]["content"].trim();
         print(gptResponse);
 
+        _showPopup(context, gptResponse);
+
       } else {
         print("Error: ${response.statusCode} - ${response.body}");
       }
@@ -159,13 +161,29 @@ class _GradingPageState extends State<GradingPage> {
     }
 
 
-
-
-
-
-
-
   }
+
+
+  void _showPopup(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Results"),
+          content: Text("Similarity: "+message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Closing the popup
+              },
+              child: Text("Ok"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
