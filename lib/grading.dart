@@ -324,7 +324,8 @@ class _GradingPageState extends State<GradingPage> {
           ),
           SizedBox(width: 10),
           FloatingActionButton(
-            onPressed: _showUploadOptions,
+            onPressed: _selectedImages.length < 2 ? _showUploadOptions : null,
+            backgroundColor: _selectedImages.length < 2 ? Colors.purple[100] : Colors.grey.shade400,
             child: Icon(Icons.add),
           ),
         ],
