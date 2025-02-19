@@ -26,6 +26,10 @@ class _GradingPageState extends State<GradingPage> {
   final String azureEndpoint = dotenv.env['AZURE_OCR_ENDPOINT'] ?? "";
   final String azureApiKey = dotenv.env['AZURE_OCR_API_KEY'] ?? "";
 
+  final String azureGptEndpoint = dotenv.env['AZURE_GPT_ENDPOINT'] ?? "";
+  final String azureGptApiKey = dotenv.env['AZURE_GPT_API_KEY'] ?? "";
+
+
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
@@ -121,7 +125,65 @@ class _GradingPageState extends State<GradingPage> {
         print("Error extracting text: $e");
       }
     }
+
+    String prompt = "Compare the similarity between these two texts and return only a percentage (0% - 100%):\n\n"
+        "Text 1: ${_extractedText[0]}\n\n"
+        "Text 2: ${_extractedText[1]}";
+
+    try {
+      var response = await http.post(
+        Uri.parse(azureGptEndpoint),
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": azureGptApiKey,
+        },
+        body: jsonEncode({
+          "messages": [
+            {"role": "system", "content": "You are an AI that analyzes text similarity and returns a similarity percentage."},
+            {"role": "user", "content": prompt}
+          ],
+          "max_tokens": 100
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        String gptResponse = jsonResponse["choices"][0]["message"]["content"].trim();
+        print(gptResponse);
+
+        _showPopup(context, gptResponse);
+
+      } else {
+        print("Error: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print( "Error: $e");
+    }
+
+
   }
+
+
+  void _showPopup(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Results"),
+          content: Text("Similarity: "+message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Closing the popup
+              },
+              child: Text("Ok"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +324,8 @@ class _GradingPageState extends State<GradingPage> {
           ),
           SizedBox(width: 10),
           FloatingActionButton(
-            onPressed: _showUploadOptions,
+            onPressed: _selectedImages.length < 2 ? _showUploadOptions : null,
+            backgroundColor: _selectedImages.length < 2 ? Colors.purple[100] : Colors.grey.shade400,
             child: Icon(Icons.add),
           ),
         ],
