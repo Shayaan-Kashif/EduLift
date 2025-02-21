@@ -30,6 +30,33 @@ class _GradingPageState extends State<GradingPage> {
   final String azureGptApiKey = dotenv.env['AZURE_GPT_API_KEY'] ?? "";
 
 
+  void _startLoading(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 15),
+              Text(message, style: TextStyle(fontSize: 16)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _stopLoading() {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+
+
+
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
@@ -68,6 +95,8 @@ class _GradingPageState extends State<GradingPage> {
   }
 
   Future<void> _extractTextFromImages() async {
+    _startLoading("Extracting texts from images");
+
     _extractedText.clear(); // Clear previous results
 
     for (File image in _selectedImages) {
@@ -126,9 +155,18 @@ class _GradingPageState extends State<GradingPage> {
       }
     }
 
-    String prompt = "Compare the similarity between these two texts and return only a percentage (0% - 100%):\n\n"
-        "Text 1: ${_extractedText[0]}\n\n"
-        "Text 2: ${_extractedText[1]}";
+    //_stopLoading();
+    await Future.delayed(Duration(milliseconds: 300));
+    _startLoading("Grading...");
+
+    String prompt = "Compare each text in the following list to the first text and return a similarity percentage (0% - 100%) for each:\n\n"
+        "Reference Text: ${_extractedText[0]}\n\n";
+
+    for (int i = 1; i < _extractedText.length; i++) {
+      prompt += "Student ${i}: ${_extractedText[i]}\n";
+    }
+    prompt += "\nReturn the results in this format: 'Student 1: 85%,\n Student 2: 72%,\n ...' with no additional explanation.";
+
 
     try {
       var response = await http.post(
@@ -139,7 +177,7 @@ class _GradingPageState extends State<GradingPage> {
         },
         body: jsonEncode({
           "messages": [
-            {"role": "system", "content": "You are an AI that analyzes text similarity and returns a similarity percentage."},
+            {"role": "system", "content": "You are an AI that analyzes text similarity and returns a similarity percentages."},
             {"role": "user", "content": prompt}
           ],
           "max_tokens": 100
@@ -151,6 +189,9 @@ class _GradingPageState extends State<GradingPage> {
         String gptResponse = jsonResponse["choices"][0]["message"]["content"].trim();
         print(gptResponse);
 
+        _stopLoading();
+        _stopLoading();
+        await Future.delayed(Duration(milliseconds: 200));
         _showPopup(context, gptResponse);
 
       } else {
@@ -170,7 +211,7 @@ class _GradingPageState extends State<GradingPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("Results"),
-          content: Text("Similarity: "+message),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
@@ -324,12 +365,15 @@ class _GradingPageState extends State<GradingPage> {
           ),
           SizedBox(width: 10),
           FloatingActionButton(
-            onPressed: _selectedImages.length < 2 ? _showUploadOptions : null,
-            backgroundColor: _selectedImages.length < 2 ? Colors.purple[100] : Colors.grey.shade400,
+            onPressed: _selectedImages.length < 6 ? _showUploadOptions : null,
+            backgroundColor: _selectedImages.length < 6 ? Colors.purple[100] : Colors.grey.shade400,
             child: Icon(Icons.add),
           ),
+
         ],
+
       ),
+
     );
   }
 }
