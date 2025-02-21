@@ -159,13 +159,13 @@ class _GradingPageState extends State<GradingPage> {
     await Future.delayed(Duration(milliseconds: 300));
     _startLoading("Grading...");
 
-    String prompt = "Compare each text in the following list to the first text and return a similarity percentage (0% - 100%) for each:\n\n"
+    String prompt = "Compare each text in the following list to the first text. If the first text has a explicit question which is mathematical then check for if the student got it correct or incorrect otherwise return a similarity percentage (0% - 100%) for each and if the student name is present please put that in the response:\n\n"
         "Reference Text: ${_extractedText[0]}\n\n";
 
     for (int i = 1; i < _extractedText.length; i++) {
       prompt += "Student ${i}: ${_extractedText[i]}\n";
     }
-    prompt += "\nReturn the results in this format: 'Student 1: 85%,\n Student 2: 72%,\n ...' with no additional explanation.";
+    prompt += "\nReturn the results in this format: 'Student 1: 85% or Student 1: Correct or {Student name}: 85% or {Student name}: Correct\n Student 2: 72% or Student 2: Incorrect or Student name}: 72% or {Student name}: Incorrect\n ...' with no additional explanation.";
 
 
     try {
