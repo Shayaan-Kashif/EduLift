@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - 'backend/email_api.py'
+      - 'backend/email_api.py'  # Runs only when this file changes
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read  # Required for actions/checkout
 
     steps:
       - name: Checkout only backend files
@@ -20,7 +20,7 @@ jobs:
         with:
           sparse-checkout: |
             backend/email_api.py
-          fetch-depth: 1
+          fetch-depth: 1  # Fetch only latest commit
 
       - name: Set up Python version
         uses: actions/setup-python@v5
@@ -61,6 +61,7 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -69,3 +70,6 @@ jobs:
           app-name: 'EduLift-Email-API'
           package: release.zip
           slot-name: 'production'  # Correct slot name (lowercase)
+
+      - name: Set Azure startup command
+        run: az webapp config set --resource-group EduLiftResourceGroup --name EduLift-Email-API --startup-file "gunicorn -w 4 -b 0.0.0.0:8000 backend.email_api:app"
