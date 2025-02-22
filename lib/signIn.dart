@@ -58,6 +58,7 @@ class _SignInPageState extends State<SignInPage> {
                       name: nameController.text,
                       school: schoolController.text,
                       position: positionController.text,
+
                     ),
                   ),
                 );

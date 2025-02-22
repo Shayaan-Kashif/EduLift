@@ -159,13 +159,13 @@ class _GradingPageState extends State<GradingPage> {
     await Future.delayed(Duration(milliseconds: 300));
     _startLoading("Grading...");
 
-    String prompt = "Compare each text in the following list to the first text and return a similarity percentage (0% - 100%) for each:\n\n"
+    String prompt = "Compare each text in the following list to the first text. If the first text has a explicit question which is mathematical then check for if the student got it correct or incorrect otherwise return a similarity percentage (0% - 100%) for each and if the student name is present please put that in the response:\n\n"
         "Reference Text: ${_extractedText[0]}\n\n";
 
     for (int i = 1; i < _extractedText.length; i++) {
       prompt += "Student ${i}: ${_extractedText[i]}\n";
     }
-    prompt += "\nReturn the results in this format: 'Student 1: 85%,\n Student 2: 72%,\n ...' with no additional explanation.";
+    prompt += "\nReturn the results in this format: 'Student 1: 85% or Student 1: Correct or {Student name}: 85% or {Student name}: Correct\n Student 2: 72% or Student 2: Incorrect or Student name}: 72% or {Student name}: Incorrect\n ...' with no additional explanation.";
 
 
     try {
@@ -213,9 +213,19 @@ class _GradingPageState extends State<GradingPage> {
           title: Text("Results"),
           content: Text(message),
           actions: [
+
+            TextButton(
+              onPressed: () async {
+                await sendEmail("example-email@gmail.com", "Results", message);
+                Navigator.of(context).pop();
+              },
+              child: Text("Send Email"),
+            ),
+
+
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Closing the popup
+                Navigator.of(context).pop();
               },
               child: Text("Ok"),
             ),
@@ -223,6 +233,34 @@ class _GradingPageState extends State<GradingPage> {
         );
       },
     );
+  }
+
+
+  Future<void> sendEmail(String recipient, String subject, String messageText) async {
+    const String apiUrl = "http://192.168.2.213:3000/send-email";
+
+    Map<String, dynamic> emailData = {
+      "recipient": recipient,
+      "subject": subject,
+      "plain_text": messageText,
+      "html_content": "<h3>$subject</h3><p>$messageText</p>"
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(emailData),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Email sent successfully: ${response.body}");
+      } else {
+        print("❌ Error sending email: ${response.body}");
+      }
+    } catch (error) {
+      print("❌ HTTP Error: $error");
+    }
   }
 
 
