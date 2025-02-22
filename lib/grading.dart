@@ -213,9 +213,19 @@ class _GradingPageState extends State<GradingPage> {
           title: Text("Results"),
           content: Text(message),
           actions: [
+
+            TextButton(
+              onPressed: () async {
+                await sendEmail("example-email@gmail.com", "Results", message);
+                Navigator.of(context).pop();
+              },
+              child: Text("Send Email"),
+            ),
+
+
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Closing the popup
+                Navigator.of(context).pop();
               },
               child: Text("Ok"),
             ),
@@ -223,6 +233,34 @@ class _GradingPageState extends State<GradingPage> {
         );
       },
     );
+  }
+
+
+  Future<void> sendEmail(String recipient, String subject, String messageText) async {
+    const String apiUrl = "http://192.168.2.213:3000/send-email";
+
+    Map<String, dynamic> emailData = {
+      "recipient": recipient,
+      "subject": subject,
+      "plain_text": messageText,
+      "html_content": "<h3>$subject</h3><p>$messageText</p>"
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(emailData),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Email sent successfully: ${response.body}");
+      } else {
+        print("❌ Error sending email: ${response.body}");
+      }
+    } catch (error) {
+      print("❌ HTTP Error: $error");
+    }
   }
 
 
