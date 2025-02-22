@@ -38,8 +38,7 @@ def send_email():
                 "html": html_content
             }
         }
-
-        # Send email
+        #Sending the Email
         poller = email_client.begin_send(message)
         result = poller.result()
 
