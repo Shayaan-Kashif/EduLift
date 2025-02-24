@@ -240,11 +240,30 @@ class _GradingPageState extends State<GradingPage> {
   Future<void> sendEmail(String recipient, String subject, String messageText) async {
     const String apiUrl = "https://edulift-email-api-hbhrhfgvffcfauer.canadacentral-01.azurewebsites.net/send-email";
 
+    String formattedMessageText = messageText
+        .split("\n")
+        .map((line) {
+      List<String> parts = line.split(":");
+      return "<p><strong>${parts[0]}</strong>: ${parts[1]}</p>";
+    })
+        .join("");
+
     Map<String, dynamic> emailData = {
       "recipient": recipient,
       "subject": subject,
       "plain_text": messageText,
-      "html_content": "<h3>$subject</h3><p>$messageText</p>"
+      "html_content": """
+  <p>Hi ${widget.name},</p>
+  <p>We have completed marking your students! You can find the results of each student below:</p>
+
+  ${formattedMessageText}
+  
+  <p>We thank you for using EduLift! We appreciate your dedication to education and your efforts in marking student work. 
+  If you have any feedback or need any assistance, feel free to reach out to us. We’re always here to help!</p>
+  
+  <p>Sincerely,</p>
+  <p><strong>The EduLift Team</strong></p>
+  """
     };
 
     try {
