@@ -11,8 +11,9 @@ class GradingPage extends StatefulWidget {
   final String name;
   final String school;
   final String position;
+  final String email;
 
-  GradingPage({required this.name, required this.school, required this.position});
+  GradingPage({required this.name, required this.school, required this.position, required this.email});
 
   @override
   _GradingPageState createState() => _GradingPageState();
@@ -159,7 +160,7 @@ class _GradingPageState extends State<GradingPage> {
     await Future.delayed(Duration(milliseconds: 300));
     _startLoading("Grading...");
 
-    String prompt = "Compare each text in the following list to the first text. If the first text has a explicit question which is mathematical then check for if the student got it correct or incorrect otherwise return a similarity percentage (0% - 100%) for each and if the student name is present please put that in the response:\n\n"
+    String prompt = "Compare each text in the following list to the first text. If the first text has a explicit question which is mathematical then check for if the student got it correct or incorrect otherwise return a similarity percentage (0% - 100%) for each and if the student name is present please put that in the response rather than Student 1: please:\n\n"
         "Reference Text: ${_extractedText[0]}\n\n";
 
     for (int i = 1; i < _extractedText.length; i++) {
@@ -216,7 +217,7 @@ class _GradingPageState extends State<GradingPage> {
 
             TextButton(
               onPressed: () async {
-                await sendEmail("example-email@gmail.com", "Results", message);
+                await sendEmail(widget.email, "Results", message);
                 Navigator.of(context).pop();
               },
               child: Text("Send Email"),
