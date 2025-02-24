@@ -18,14 +18,15 @@ class _SignInPageState extends State<SignInPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GradingPage(name: "Guest", school: "", position: ""),
+        builder: (context) => GradingPage(name: "Guest", school: "", position: "", email:""),
       ),
     );
   }
 
   void _signIn() {
     if (emailController.text.isNotEmpty && emailRegex.hasMatch(emailController.text)) {
-      _showDetailsDialog();
+      //_showDetailsDialog();
+      _showDetailsDialog(emailController.text);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please enter a valid email address.")),
@@ -33,7 +34,7 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  void _showDetailsDialog() {
+  void _showDetailsDialog(String email) {
     showDialog(
       context: context,
       builder: (context) {
@@ -58,6 +59,7 @@ class _SignInPageState extends State<SignInPage> {
                       name: nameController.text,
                       school: schoolController.text,
                       position: positionController.text,
+                      email: email,
 
                     ),
                   ),
