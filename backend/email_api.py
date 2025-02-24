@@ -38,8 +38,7 @@ def send_email():
                 "html": html_content
             }
         }
-
-        # Send email
+        #Sending the Email
         poller = email_client.begin_send(message)
         result = poller.result()
 
@@ -50,4 +49,4 @@ def send_email():
 
 # Run the Flask app
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
