@@ -1,0 +1,4 @@
+azure-communication-email
+flask
+gunicorn
+python-dotenv

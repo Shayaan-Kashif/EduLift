@@ -237,7 +237,7 @@ class _GradingPageState extends State<GradingPage> {
 
 
   Future<void> sendEmail(String recipient, String subject, String messageText) async {
-    const String apiUrl = "http://192.168.2.213:3000/send-email";
+    const String apiUrl = "https://edulift-email-api-hbhrhfgvffcfauer.canadacentral-01.azurewebsites.net/send-email";
 
     Map<String, dynamic> emailData = {
       "recipient": recipient,
@@ -256,7 +256,7 @@ class _GradingPageState extends State<GradingPage> {
       if (response.statusCode == 200) {
         print("✅ Email sent successfully: ${response.body}");
       } else {
-        print("❌ Error sending email: ${response.body}");
+        print("Error sending email: ${response.body}");
       }
     } catch (error) {
       print("❌ HTTP Error: $error");
