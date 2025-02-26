@@ -102,10 +102,8 @@ class _GradingPageState extends State<GradingPage> {
 
     for (File image in _selectedImages) {
       try {
-        // Convert image to binary (bytes)
         List<int> imageBytes = await image.readAsBytes();
 
-        // Send request to Azure OCR API
         var response = await http.post(
           Uri.parse(azureEndpoint),
           headers: {
@@ -116,15 +114,12 @@ class _GradingPageState extends State<GradingPage> {
         );
 
         if (response.statusCode == 202) {
-          // Extract Operation-Location for result retrieval
           String operationUrl = response.headers['operation-location'] ?? '';
           if (operationUrl.isNotEmpty) {
             await Future.delayed(Duration(seconds: 3)); // Wait for processing
             var resultResponse = await http.get(
               Uri.parse(operationUrl),
-              headers: {
-                "Ocp-Apim-Subscription-Key": azureApiKey,
-              },
+              headers: {"Ocp-Apim-Subscription-Key": azureApiKey},
             );
 
             if (resultResponse.statusCode == 200) {
@@ -144,7 +139,6 @@ class _GradingPageState extends State<GradingPage> {
                 _extractedText.add(extractedText); // Store extracted text
               });
 
-              // Print extracted text to console
               print("Extracted Text from Image:\n$extractedText");
             }
           }
@@ -156,18 +150,46 @@ class _GradingPageState extends State<GradingPage> {
       }
     }
 
-    //_stopLoading();
     await Future.delayed(Duration(milliseconds: 300));
     _startLoading("Grading...");
 
-    String prompt = "Compare each text in the following list to the first text. If the first text has a explicit question which is mathematical then check for if the student got it correct or incorrect otherwise return a similarity percentage (0% - 100%) for each and if the student name is present please put that in the response rather than Student 1: please:\n\n"
-        "Reference Text: ${_extractedText[0]}\n\n";
+    String prompt = "You are a math teacher grading student answers.\n"
+        "For each student's answers:\n"
+        "- For mathematical equations (like 4+4=8), check if the calculation is correct\n"
+        "- For statements (like 'Water is H2O'), check if they are correct\n"
+        "- For statistical questions (like finding median), check if the answer matches the correct calculation\n"
+        "- When the answer starts with 'A:', grade the number after it\n"
+        "- Grade each answer independently\n"
+        "- Use the same format for all students\n"
+        "- A name will be provided after Name: {student name} if no name is provided then write Student 1 Student 2... for those studnets\n"
+        "- Grade ALL students, even if their answers are incorrect\n\n"
+        "Grade these answers:\n\n";
 
-    for (int i = 1; i < _extractedText.length; i++) {
-      prompt += "Student ${i}: ${_extractedText[i]}\n";
+    for (int i = 0; i < _extractedText.length; i++) {
+      prompt += "Student ${i+1}: ${_extractedText[i]}\n";
     }
-    prompt += "\nReturn the results in this format: 'Student 1: 85% or Student 1: Correct or {Student name}: 85% or {Student name}: Correct\n Student 2: 72% or Student 2: Incorrect or Student name}: 72% or {Student name}: Incorrect\n ...' with no additional explanation.";
 
+    prompt += "\nShow results in this format for ALL students:\n"
+        "{Student name}:\n"
+        "4+4=8: True\nStudent Answer: {student answer} \nResult: Correct\n"
+        "2+2=5: False \nStudent Answer: {student answer} \nResult: Incorrect\n"
+        "Water is H2O: True\nStudent Answer: {student answer} \nResult: Correct\n\n"
+        "{Student name}:\n"
+        "(similar format)\n\n"
+        "{Student name}:\n"
+        "Find the median 1,4,9,15,18: 9\nStudent Answer: {student answer} \nResult: Correct\n\n"
+        "{Student name}:\n"
+        "Find the median 1,4,9,15,18: 9\nStudent Answer: {student answer} \nResult: Incorrect\n\n"
+        "Important:\n"
+        "- Use exactly this format for all students\n"
+        "- Mark answers simply as Correct or Incorrect\n"
+        "- Show the correct answer only when the answer is wrong\n"
+        "- Grade each answer independently\n"
+        "- Grade ALL students' answers\n"
+        "- Keep the same simple format for all types of questions\n"
+        "- When an answer is 'A: 9.4', grade it as 'Incorrect (correct answer is 9)'\n"
+        "- Make sure to show results for every student\n"
+        "- YOU MUST SHOW RESULTS FOR ALL STUDENTS INCLUDING STUDENT 4";
 
     try {
       var response = await http.post(
@@ -178,10 +200,14 @@ class _GradingPageState extends State<GradingPage> {
         },
         body: jsonEncode({
           "messages": [
-            {"role": "system", "content": "You are an AI that analyzes text similarity and returns a similarity percentages."},
+            {
+              "role": "system",
+              "content": "You are a math teacher. Grade each answer simply as Correct or Incorrect. Use the same format for all students. For wrong answers, show the correct answer in parentheses. You must grade ALL students' answers, even if incorrect. When grading answers that start with 'A:', focus on the number after it. YOU MUST GRADE ALL STUDENTS INCLUDING STUDENT 4."
+            },
             {"role": "user", "content": prompt}
           ],
-          "max_tokens": 100
+          "max_tokens": 200,
+          "temperature": 0.3
         }),
       );
 
@@ -191,50 +217,131 @@ class _GradingPageState extends State<GradingPage> {
         print(gptResponse);
 
         _stopLoading();
-        _stopLoading();
         await Future.delayed(Duration(milliseconds: 200));
-        _showPopup(context, gptResponse);
 
-      } else {
-        print("Error: ${response.statusCode} - ${response.body}");
+        // **Show Dialog Directly Here Instead of Calling Another Function**
+        if (Navigator.canPop(context)) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+
+        List<String> studentResults = gptResponse.split('\n\n')
+            .where((result) => result.trim().isNotEmpty && result.toLowerCase().contains('student'))
+            .toList();
+
+        print("Number of student results: ${studentResults.length}");
+        print("Results content: $gptResponse");
+
+        while (studentResults.length < _selectedImages.length) {
+          studentResults.add("Student ${studentResults.length + 1}:\nGrading results not available");
+        }
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            PageController _pageController = PageController();
+            return WillPopScope(
+              onWillPop: () async => true,
+              child: AlertDialog(
+                title: Text("Grading Results"),
+                content: Container(
+                  width: double.maxFinite,
+                  height: 300,
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                        controller: _pageController,
+                        itemCount: _selectedImages.length,
+                        itemBuilder: (context, index) {
+                          return SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Student ${index + 1} Results",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Image ${index + 1}",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 15),
+                                Text(studentResults[index]),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      if (_selectedImages.length > 1) ...[
+                        Positioned(
+                          left: 0,
+                          bottom: 20,
+                          child: IconButton(
+                            icon: Icon(Icons.arrow_back_ios),
+                            onPressed: () {
+                              _pageController.previousPage(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 20,
+                          child: IconButton(
+                            icon: Icon(Icons.arrow_forward_ios),
+                            onPressed: () {
+                              _pageController.nextPage(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      await sendEmail(widget.email, "Results", gptResponse);
+                      Navigator.of(context).pop();
+                    },
+                    child: Text("Send Email"),
+                  ),
+
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context, rootNavigator: true).pop();
+                    },
+                    child: Text("OK"),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       }
     } catch (e) {
-      print( "Error: $e");
+      print("Error: $e");
     }
-
-
   }
 
 
-  void _showPopup(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Results"),
-          content: Text(message),
-          actions: [
-
-            TextButton(
-              onPressed: () async {
-                await sendEmail(widget.email, "Results", message);
-                Navigator.of(context).pop();
-              },
-              child: Text("Send Email"),
-            ),
-
-
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Ok"),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
 
   Future<void> sendEmail(String recipient, String subject, String messageText) async {
@@ -244,6 +351,9 @@ class _GradingPageState extends State<GradingPage> {
         .split("\n")
         .map((line) {
       List<String> parts = line.split(":");
+      if (parts.length < 2) {
+        return "<p><strong>${parts[0]}</strong></p>"; // Handle lines without `:`
+      }
       return "<p><strong>${parts[0]}</strong>: ${parts[1]}</p>";
     })
         .join("");
