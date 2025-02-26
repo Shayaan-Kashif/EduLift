@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'signin.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:async';
+
+
 
 class GradingPage extends StatefulWidget {
   final String name;
@@ -184,16 +187,18 @@ class _GradingPageState extends State<GradingPage> {
         "Important:\n"
         "- Use exactly this format for all students\n"
         "- Mark answers simply as Correct or Incorrect\n"
-        "- Show the correct answer only when the answer is wrong\n"
+        "- Show the correct answer according to the solution sheet ${_extractedText[0]} only when the answer is wrong\n"
         "- Grade each answer independently\n"
         "- Grade ALL students' answers\n"
         "- Keep the same simple format for all types of questions\n"
         "- When an answer is 'A: 9.4', grade it as 'Incorrect (correct answer is 9)'\n"
         "- Make sure to show results for every student\n"
+        "- YOU MUST USE THE ANSWER SHEET PROVIDED ${_extractedText[0]} WHEN MARKING STUDENTS. THE ANSWERS WITHIN IT ARE CONSIDERED CORRECT FOR MARKING PURPOSES.\n"
         "- YOU MUST SHOW RESULTS FOR ALL STUDENTS INCLUDING STUDENT 4";
 
     try {
-      var response = await http.post(
+      var response = await http
+          .post(
         Uri.parse(azureGptEndpoint),
         headers: {
           "Content-Type": "application/json",
@@ -203,14 +208,15 @@ class _GradingPageState extends State<GradingPage> {
           "messages": [
             {
               "role": "system",
-              "content": "You are a math teacher. Grade each answer simply as Correct or Incorrect. Use the same format for all students. For wrong answers, show the correct answer in parentheses. You must grade ALL students' answers, even if incorrect. When grading answers that start with 'A:', focus on the number after it. YOU MUST GRADE ALL STUDENTS INCLUDING STUDENT 4."
+              "content": "You are a math teacher. Grade each answer simply as Correct or Incorrect according to the answer sheet ${_extractedText[0]}. Use the same format for all students. For wrong answers, show the correct answer in parentheses according to the answer sheet ${_extractedText[0]}. You must grade ALL students' answers, even if incorrect. When grading answers that start with 'A:', focus on the number after it. YOU MUST GRADE ALL STUDENTS INCLUDING STUDENT 4."
             },
             {"role": "user", "content": prompt}
           ],
           "max_tokens": 200,
           "temperature": 0.3
         }),
-      );
+      )
+          .timeout(Duration(seconds: 35));
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
@@ -220,7 +226,6 @@ class _GradingPageState extends State<GradingPage> {
         _stopLoading();
         await Future.delayed(Duration(milliseconds: 200));
 
-        // **Show Dialog Directly Here Instead of Calling Another Function**
         if (Navigator.canPop(context)) {
           Navigator.of(context, rootNavigator: true).pop();
         }
@@ -232,7 +237,7 @@ class _GradingPageState extends State<GradingPage> {
         print("Number of student results: ${studentResults.length}");
         print("Results content: $gptResponse");
 
-        while (studentResults.length < _selectedImages.length-1) {
+        while (studentResults.length < _selectedImages.length - 1) {
           studentResults.add("Student ${studentResults.length + 1}:\nGrading results not available");
         }
 
@@ -336,12 +341,46 @@ class _GradingPageState extends State<GradingPage> {
             );
           },
         );
+      } else {
+        _stopLoading();
+        _stopLoading();
+        print("Error: ${response.statusCode} - ${response.body}");
+        _showErrorPopup("Failed to process grading results. Please try again in a few minutes.");
       }
-    } catch (e) {
+    } on TimeoutException catch (_) {
+      _stopLoading();
+      print("Timeout Error: API took too long to respond.");
+      _showErrorPopup("Grading took too long. Please try again later.");
+    } on Exception catch (e) {
+      _stopLoading();
       print("Error: $e");
+      _showErrorPopup("An unexpected error occurred. Please try again.");
     }
+
+
+
   }
 
+  void _showErrorPopup(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevents dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Error", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+          content: Text(message, style: TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+              },
+              child: Text("OK", style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
 
