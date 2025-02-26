@@ -162,11 +162,12 @@ class _GradingPageState extends State<GradingPage> {
         "- Grade each answer independently\n"
         "- Use the same format for all students\n"
         "- A name will be provided after Name: {student name} if no name is provided then write Student 1 Student 2... for those studnets\n"
+        "- Reference Text for answers: ${_extractedText[0]}. Mark All the students against this answer sheet\n"
         "- Grade ALL students, even if their answers are incorrect\n\n"
         "Grade these answers:\n\n";
 
-    for (int i = 0; i < _extractedText.length; i++) {
-      prompt += "Student ${i+1}: ${_extractedText[i]}\n";
+    for (int i = 1; i < _extractedText.length; i++) {
+      prompt += "Student ${i}: ${_extractedText[i]}\n";
     }
 
     prompt += "\nShow results in this format for ALL students:\n"
@@ -231,7 +232,7 @@ class _GradingPageState extends State<GradingPage> {
         print("Number of student results: ${studentResults.length}");
         print("Results content: $gptResponse");
 
-        while (studentResults.length < _selectedImages.length) {
+        while (studentResults.length < _selectedImages.length-1) {
           studentResults.add("Student ${studentResults.length + 1}:\nGrading results not available");
         }
 
@@ -251,7 +252,7 @@ class _GradingPageState extends State<GradingPage> {
                     children: [
                       PageView.builder(
                         controller: _pageController,
-                        itemCount: _selectedImages.length,
+                        itemCount: studentResults.length,
                         itemBuilder: (context, index) {
                           return SingleChildScrollView(
                             child: Column(
